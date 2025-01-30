@@ -16,13 +16,18 @@ function SignIn() {
 
   const navigate = useNavigate();
 
-  const onChange = () => {};
+  const onChange = (e) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [e.target.id]: e.target.value,
+    }));
+  };
 
   return (
     <>
       <div className="pageContainer">
         <header>
-          <p className="pageHeader">Welcome Back</p>
+          <p className="pageHeader mb-4">Welcome Back!</p>
         </header>
 
         <main>
@@ -35,7 +40,39 @@ function SignIn() {
               value={email}
               onChange={onChange}
             />
+
+            <div className="passwordInputDiv">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="passwordInput"
+                placeholder="Password"
+                id="password"
+                value={password}
+                onChange={onChange}
+              />
+              {/* <img
+                src={visibilityIcon}
+                alt="show password"
+                onClick={() => setShowPassword((prev) => !prevState)}
+              /> */}
+            </div>
+
+            <Link to="/forgot-password" className="forgotPasswordLink">
+              Forgot Password
+            </Link>
+            <div className="signInBar">
+              <p className="signInText">Sign In</p>
+              <button className="signInButton">
+                <img src={ArrowRightIcon} alt="" />
+              </button>
+            </div>
           </form>
+
+          {/* Google OAuth */}
+
+          <Link to="/sign-up" className="registerLink">
+            Sign Up Instead
+          </Link>
         </main>
       </div>
     </>
