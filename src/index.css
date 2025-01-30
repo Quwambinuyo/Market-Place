@@ -626,6 +626,7 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 2rem;
 }
 
 .logOut {
@@ -643,6 +644,7 @@ button {
   display: flex;
   justify-content: space-between;
   max-width: 500px;
+  margin-bottom: 15px;
 }
 
 .personalDetailsText {
