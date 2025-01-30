@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import ArrowRightIcon from "../assets/svg/keyboardArrowRightIcon.svg";
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
 import {
@@ -50,7 +51,7 @@ function SignUp() {
 
       navigate("/");
     } catch (error) {
-      console.error("Error signing up:", error); // Improved error handling
+      toast.error("Something went wrong");
     }
   };
 
