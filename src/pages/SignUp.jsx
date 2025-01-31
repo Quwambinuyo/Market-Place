@@ -8,7 +8,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
-import { setDoc, doc, serverTimestamp } from "firebase/firestore"; // Fixed import
+import { setDoc, doc, serverTimestamp } from "firebase/firestore";
+import OAuth from "../components/OAuth";
 import { db } from "../firebase.config";
 
 function SignUp() {
@@ -58,7 +59,7 @@ function SignUp() {
   return (
     <div className="pageContainer">
       <header>
-        <p className="pageHeader mb-4">Welcome Back!</p>
+        <p className="mb-4 pageHeader">Welcome Back!</p>
       </header>
 
       <main>
@@ -108,6 +109,8 @@ function SignUp() {
             </button>
           </div>
         </form>
+
+        <OAuth />
 
         <Link to="/sign-in" className="registerLink">
           Sign In Instead
