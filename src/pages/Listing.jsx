@@ -68,6 +68,7 @@ function Listing() {
               className="listingImage"
               style={{
                 width: "100%",
+
                 borderRadius: "10px",
               }}
             />
