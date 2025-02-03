@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import DeleteIcon from "../assets/svg/deleteIcon.svg";
+import { AiOutlineDelete } from "react-icons/ai";
 import bedIcon from "../assets/svg/bedIcon.svg";
 import bathtubIcon from "../assets/svg/bathtubIcon.svg";
 
@@ -48,11 +48,12 @@ function ListingItem({ listing, id, onDelete }) {
         </Link>
 
         {onDelete && (
-          <DeleteIcon
+          <button
             className="removeIcon"
-            fill="rgb(231, 76, 60)"
             onClick={() => onDelete(listing.id, listing.name)}
-          />
+          >
+            <AiOutlineDelete />
+          </button>
         )}
       </li>
     </div>

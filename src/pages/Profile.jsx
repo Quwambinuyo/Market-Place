@@ -1,43 +1,87 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getAuth, onAuthStateChanged, updateProfile } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+  orderBy,
+} from "firebase/firestore";
 import { db } from "../firebase.config";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import ListingItem from "../components/ListingItem";
 import arrowRight from "../assets/svg/keyboardArrowRightIcon.svg";
 import homeIcon from "../assets/svg/homeIcon.svg";
 
 function Profile() {
   const auth = getAuth();
-  const navigate = useNavigate();
-  const nameInputRef = useRef(null);
-
+  const [loading, setLoading] = useState(true);
+  const [listings, setListings] = useState(null);
   const [changeDetails, setChangeDetails] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: auth.currentUser.displayName,
+    email: auth.currentUser.email,
   });
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setFormData({
-          name: user.displayName || "",
-          email: user.email || "",
-        });
-      } else {
-        navigate("/sign-in");
-      }
-    });
-
-    return () => unsubscribe();
-  }, [auth, navigate]);
 
   const { name, email } = formData;
 
-  const onLogout = async () => {
-    await auth.signOut();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserListings = async () => {
+      const listingsRef = collection(db, "listings");
+
+      const q = query(
+        listingsRef,
+        where("userRef", "==", auth.currentUser.uid),
+        orderBy("timestamp", "desc")
+      );
+
+      const querySnap = await getDocs(q);
+
+      let listings = [];
+
+      querySnap.forEach((doc) => {
+        return listings.push({
+          id: doc.id,
+          data: doc.data(),
+        });
+      });
+
+      setListings(listings);
+      setLoading(false);
+    };
+
+    fetchUserListings();
+  }, [auth.currentUser.uid]);
+
+  const onLogout = () => {
+    auth.signOut();
     navigate("/");
+  };
+
+  const onSubmit = async () => {
+    try {
+      if (auth.currentUser.displayName !== name) {
+        // Update display name in fb
+        await updateProfile(auth.currentUser, {
+          displayName: name,
+        });
+
+        // Update in firestore
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(userRef, {
+          name,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Could not update profile details");
+    }
   };
 
   const onChange = (e) => {
@@ -47,29 +91,27 @@ function Profile() {
     }));
   };
 
-  const onSubmit = async () => {
-    try {
-      if (auth.currentUser.displayName !== name) {
-        await updateProfile(auth.currentUser, {
-          displayName: name,
-        });
-
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userRef, {
-          name,
-        });
-      }
-    } catch (error) {
-      toast.error("Could not update profile details");
+  const onDelete = async (listingId) => {
+    if (window.confirm("Are you sure you want to delete?")) {
+      await deleteDoc(doc(db, "listings", listingId));
+      const updatedListings = listings.filter(
+        (listing) => listing.id !== listingId
+      );
+      setListings(updatedListings);
+      toast.success("Successfully deleted listing");
     }
   };
+
+  const onEdit = (listingId) => navigate(`/edit-listing/${listingId}`);
+
+  console.log(listings);
 
   return (
     <div className="profile">
       <header className="profileHeader">
         <p className="pageHeader">My Profile</p>
-        <button className="logOut" type="button" onClick={onLogout}>
-          Log Out
+        <button type="button" className="logOut" onClick={onLogout}>
+          Logout
         </button>
       </header>
 
@@ -79,10 +121,7 @@ function Profile() {
           <p
             className="changePersonalDetails"
             onClick={() => {
-              if (changeDetails) {
-                onSubmit();
-                nameInputRef.current.blur();
-              }
+              changeDetails && onSubmit();
               setChangeDetails((prevState) => !prevState);
             }}
           >
@@ -97,16 +136,16 @@ function Profile() {
               id="name"
               className={!changeDetails ? "profileName" : "profileNameActive"}
               disabled={!changeDetails}
-              ref={nameInputRef}
               value={name}
               onChange={onChange}
             />
             <input
               type="email"
               id="email"
-              className="profileEmail"
-              disabled
+              className={!changeDetails ? "profileEmail" : "profileEmailActive"}
+              disabled={!changeDetails}
               value={email}
+              onChange={onChange}
             />
           </form>
         </div>
@@ -116,6 +155,23 @@ function Profile() {
           <p>Sell or rent your home</p>
           <img src={arrowRight} alt="arrow right" />
         </Link>
+
+        {!loading && listings?.length > 0 && (
+          <>
+            <p className="listingText">Your Listings</p>
+            <ul className="listingsList">
+              {listings.map((listing) => (
+                <ListingItem
+                  key={listing.id}
+                  listing={listing.data}
+                  id={listing.id}
+                  onDelete={() => onDelete(listing.id)}
+                  onEdit={() => onEdit(listing.id)}
+                />
+              ))}
+            </ul>
+          </>
+        )}
       </main>
     </div>
   );
