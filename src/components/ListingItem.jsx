@@ -11,7 +11,7 @@ function ListingItem({ listing, id, onDelete }) {
     <div>
       <li className="categoryListing">
         <Link
-          to={`/category/${listing.type}${id}`}
+          to={`/category/${listing.type}/${id}`}
           className="categoryListingLink"
         >
           <img
