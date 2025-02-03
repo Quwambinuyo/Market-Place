@@ -1,10 +1,36 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Autocomplete,
+} from "@react-google-maps/api";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../components/Spinner";
+import { toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
+import { formatImages, libraries } from "../Common";
+import { db } from "../firebase.config";
 
 function CreateListing() {
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_MAP_API_KEY,
+    libraries,
+  });
   const [geolocationEnabled, setGeoLocationEnabled] = useState(true);
+  const [isAddressValid, setIsAddressValid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: "rent",
@@ -14,6 +40,7 @@ function CreateListing() {
     parking: false,
     furnished: false,
     address: "",
+    addressCopy: "",
     offer: false,
     regularPrice: 0,
     discountedPrice: 0,
@@ -31,12 +58,15 @@ function CreateListing() {
     furnished,
     address,
     offer,
+    addressCopy,
     regularPrice,
     discountedPrice,
     images,
     latitude,
     longitude,
   } = formData;
+
+  const addressRef = useRef();
 
   const auth = getAuth();
   const navigate = useNavigate();
@@ -61,8 +91,69 @@ function CreateListing() {
     };
   }, [auth, navigate]);
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (discountedPrice >= regularPrice) {
+        setLoading(false);
+        toast.error("Discounted Price needs to be less than regular price");
+
+        return;
+      }
+
+      if (images.length > 6) {
+        setLoading(false);
+        toast.error("Max 6 images");
+        return;
+      }
+
+      let geolocation = {};
+      let location;
+
+      const updatedImage = await Promise.all(
+        Array.from(images).map((image) => formatImages(image))
+      );
+
+      geolocation.lat = latitude;
+      geolocation.lng = longitude;
+      location = addressCopy || address;
+
+      const formDataCopy = {
+        ...formData,
+        imgUrls: updatedImage,
+        geolocation,
+        timestamp: serverTimestamp(),
+      };
+
+      delete formDataCopy.images;
+      delete formDataCopy.addressCopy;
+
+      location && (formDataCopy.location = location);
+      !formDataCopy.offer && delete formDataCopy.discountedPrice;
+
+      const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+      toast.success("listing saved");
+
+      navigate(`/category/${formDataCopy.type}/${docRef.id}`);
+
+      console.log(updatedImage);
+    } catch (error) {
+      console.log(error, error?.message, error?.response);
+      if (
+        error?.message?.includes("cannot be written because its size") ||
+        error?.message?.includes('The value of property "imgUrls" is longer')
+      ) {
+        console.log(error);
+        toast.error("Image size is too large");
+      } else {
+        toast.error("Failed to create listing");
+        console.log(error);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onMutate = (e) => {
@@ -96,6 +187,8 @@ function CreateListing() {
   if (loading) {
     return <Spinner />;
   }
+
+  // console.log(formData);
 
   return (
     <div className="profile">
@@ -222,16 +315,44 @@ function CreateListing() {
             </div>
 
             <label className="formLabel">Address</label>
-            <textarea
-              className="formInputAddress"
-              type="text"
-              id="address"
-              value={address}
-              onChange={onMutate}
-              required
-            />
+            {isLoaded && (
+              <Autocomplete
+                onLoad={(autocomplete) => (addressRef.current = autocomplete)}
+                onPlaceChanged={() => {
+                  const place = addressRef.current.getPlace();
 
-            {!geolocationEnabled && (
+                  if (place) {
+                    setIsAddressValid(true);
+                  }
+
+                  const address = {
+                    name: place.formatted_address,
+                    longitude: place.geometry.location.lng(),
+                    latitude: place.geometry.location.lat(),
+                  };
+
+                  setFormData((prev) => ({
+                    ...prev,
+                    addressCopy: address.name,
+                    longitude: address.longitude,
+                    latitude: address.latitude,
+                  }));
+                }}
+              >
+                <input
+                  className="formInputAddress"
+                  type="text"
+                  id="address"
+                  // value={address}
+                  defaultValue={addressCopy}
+                  onChange={onMutate}
+                  required
+                  ref={addressRef}
+                />
+              </Autocomplete>
+            )}
+
+            {isAddressValid && (
               <div className="flex formLatLng">
                 <div>
                   <label className="formLabel">Latitude</label>
@@ -242,6 +363,7 @@ function CreateListing() {
                     value={latitude}
                     onChange={onMutate}
                     required
+                    disabled
                   />
                 </div>
                 <div>
@@ -253,6 +375,7 @@ function CreateListing() {
                     value={longitude}
                     onChange={onMutate}
                     required
+                    disabled
                   />
                 </div>
               </div>

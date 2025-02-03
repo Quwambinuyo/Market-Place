@@ -19,6 +19,9 @@ function Offers() {
   const [listings, setListings] = useState(null);
   const [loading, setLoading] = useState(true);
   const params = useParams();
+
+  console.log(listings);
+
   useEffect(() => {
     const fetchListings = async () => {
       try {
