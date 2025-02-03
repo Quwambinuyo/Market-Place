@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Scrollbar, A11y } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/scrollbar";
 import { getDoc, doc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebase.config";
@@ -38,6 +44,37 @@ function Listing() {
 
   return (
     <main>
+      {/* Swiper for Image Slider */}
+      <Swiper
+        modules={[Navigation, Pagination, Scrollbar, A11y]}
+        navigation
+        pagination={{ clickable: true }}
+        scrollbar={{ draggable: true }}
+        a11y={{ enabled: true }}
+        slidesPerView={1}
+      >
+        {listing.imgUrls?.map((url, index) => (
+          <SwiperSlide
+            key={index}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <img
+              src={url}
+              alt={`Listing Image ${index + 1}`}
+              className="listingImage"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+              }}
+            />
+          </SwiperSlide>
+        ))}
+      </Swiper>
+
       {/* Share Button */}
       <div
         className="shareIconDiv"
@@ -56,7 +93,7 @@ function Listing() {
 
       <div className="listingDetails">
         <p className="listingName">
-          {listing.name} - ${" "}
+          {listing.name} - $
           {listing.offer
             ? listing.discountedPrice
                 .toString()
