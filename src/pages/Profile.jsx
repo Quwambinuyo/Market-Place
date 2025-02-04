@@ -104,8 +104,6 @@ function Profile() {
 
   const onEdit = (listingId) => navigate(`/edit-listing/${listingId}`);
 
-  console.log(listings);
-
   return (
     <div className="profile">
       <header className="profileHeader">
