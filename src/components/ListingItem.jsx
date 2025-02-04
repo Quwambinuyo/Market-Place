@@ -1,10 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { AiOutlineDelete } from "react-icons/ai";
+import { FaEdit } from "react-icons/fa";
 import bedIcon from "../assets/svg/bedIcon.svg";
 import bathtubIcon from "../assets/svg/bathtubIcon.svg";
 
-function ListingItem({ listing, id, onDelete }) {
+function ListingItem({ listing, id, onEdit, onDelete }) {
   console.log(listing);
 
   return (
@@ -53,6 +54,12 @@ function ListingItem({ listing, id, onDelete }) {
             onClick={() => onDelete(listing.id, listing.name)}
           >
             <AiOutlineDelete />
+          </button>
+        )}
+
+        {onEdit && (
+          <button>
+            <FaEdit className="editIcon" onClick={() => onEdit(id)} />
           </button>
         )}
       </li>

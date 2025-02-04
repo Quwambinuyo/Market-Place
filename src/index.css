@@ -328,7 +328,7 @@ button {
 }
 
 .exploreCategoryHeading {
-  margin-top: 3rem;
+  margin-top: 0.5rem;
   margin-bottom: 1.2rem;
 }
 
@@ -389,6 +389,7 @@ button {
 .exploreCategories {
   display: flex;
   justify-content: space-between;
+  padding-bottom: 1rem;
 }
 .exploreCategories a {
   width: 48%;
