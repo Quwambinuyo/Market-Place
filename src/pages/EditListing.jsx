@@ -22,7 +22,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { formatImages, libraries } from "../Common";
+import { formatImages, libraries } from "../common.js";
 import { db } from "../firebase.config";
 
 function EditListing() {
